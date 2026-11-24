@@ -1,0 +1,57 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Pengaturan Sistem - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<h2 class="h4 fw-bold mb-4 text-primary-deep">Pengaturan Sistem</h2>
+
+<form method="POST" action="{{ url_for('settings.update') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="mb-0 fw-bold text-white"><i class="bi bi-building me-2"></i>Identitas Sekolah</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nama Sekolah</label>
+                        <input type="text" name="school_name" class="form-control" value="{{ settings.school_name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Alamat</label>
+                        <textarea name="school_address" class="form-control" rows="3">{{ settings.school_address }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
+                <div class="card-header bg-white border-0 py-3 px-4">
+                    <h5 class="mb-0 fw-bold text-white"><i class="bi bi-clock-history me-2"></i>Jam Absensi</h5>
+                </div>
+                <div class="card-body px-4 pb-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Jam Mulai</label>
+                        <input type="time" name="attendance_start" class="form-control" value="{{ settings.attendance_start }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Batas Tepat Waktu</label>
+                        <input type="time" name="attendance_on_time" class="form-control" value="{{ settings.attendance_on_time }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Jam Akhir</label>
+                        <input type="time" name="attendance_end" class="form-control" value="{{ settings.attendance_end }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 text-end">
+        <button type="submit" class="btn btn-emerald px-4 py-2">
+            <i class="bi bi-save me-2"></i>Simpan
+        </button>
+    </div>
+</form>
+{% endblock %}

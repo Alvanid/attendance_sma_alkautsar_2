@@ -1,0 +1,55 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Riwayat Absensi - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<h2 class="h4 fw-bold text-primary-deep mb-4">Riwayat Absensi Terbaru</h2>
+
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <table id="tableHistory" class="table table-hover align-middle" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Waktu</th>
+                    <th>NIS</th>
+                    <th>Nama</th>
+                    <th>Kelas</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.date }}</td>
+                    <td>{{ r.time_in }}</td>
+                    <td>{{ r.nis }}</td>
+                    <td>{{ r.full_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ r.class_name }}</span></td>
+                    <td>
+                        <span class="badge 
+                            {% if r.status == 'Hadir' %}bg-success
+                            {% elif r.status == 'Terlambat' %}bg-warning
+                            {% elif r.status == 'Izin' %}bg-info
+                            {% elif r.status == 'Sakit' %}bg-danger
+                            {% else %}bg-secondary{% endif %} rounded-pill px-3 py-2">
+                            {{ r.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script>
+    $(document).ready(function() {
+        $('#tableHistory').DataTable({
+            order: [[0, 'desc']],
+            language: { search: "Cari:", paginate: { previous: "Prev", next: "Next" } }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="Sistem Informasi Absensi Siswa Berbasis QR Code - SMA AL-KAUTSAR">
+    <meta name="theme-color" content="#064E3B">
+    
+    <title>{% block title %}AL-KAUTSAR ATTENDANCE SYSTEM{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/sma_al-kautsar.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='images/sma_al-kautsar.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/sma_al-kautsar.png') }}">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Utama Aplikasi -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Page-Specific CSS -->
+    {% block head %}{% endblock %}
+    
+    <style>
+        /* Anti-FOUC */
+        body { opacity: 0; animation: fadeInBody 0.3s ease-in forwards; }
+        @keyframes fadeInBody { to { opacity: 1; } }
+        
+        /* Global Loader */
+        .global-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; transition: opacity 0.3s ease;
+        }
+        .global-loader.hidden { opacity: 0; pointer-events: none; }
+        
+        /* Print Styles */
+        @media print {
+            .no-print, .sidebar, .topbar { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Loader -->
+    <div id="globalLoader" class="global-loader hidden">
+        <div class="spinner"></div>
+    </div>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        // CSRF Token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
+        // Auto-hide alerts
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.alert-dismissible').forEach((alert, i) => {
+                setTimeout(() => {
+                    try { bootstrap.Alert.getOrCreateInstance(alert).close(); } catch(e) {}
+                }, 5000 + (i * 500));
+            });
+        });
+        
+        // Auto-confirm delete buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.getAttribute('href');
+                    const name = this.getAttribute('data-name') || 'data ini';
+                    
+                    Swal.fire({
+                        title: 'Konfirmasi',
+                        html: `Nonaktifkan <strong>${name}</strong>?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#DC2626',
+                        cancelButtonColor: '#6B7280',
+                        confirmButtonText: 'Ya, Nonaktifkan!',
+                        cancelButtonText: 'Batal',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('globalLoader').classList.remove('hidden');
+                            window.location.href = url;
+                        }
+                    });
+                });
+            });
+        });
+        
+        // Form loading state
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    if (this.classList.contains('no-loader')) return;
+                    const btn = this.querySelector('button[type="submit"]');
+                    if (btn && !btn.disabled) {
+                        btn.disabled = true;
+                        const original = btn.innerHTML;
+                        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Memproses...`;
+                        setTimeout(() => {
+                            if (btn) { btn.disabled = false; btn.innerHTML = original; }
+                        }, 10000);
+                    }
+                });
+            });
+        });
+        
+        // Network status
+        window.addEventListener('offline', () => {
+            Swal.fire({ icon: 'warning', title: 'Koneksi Terputus', toast: true, position: 'top-end', timer: 3000 });
+        });
+        window.addEventListener('online', () => {
+            Swal.fire({ icon: 'success', title: 'Koneksi Pulih', toast: true, position: 'top-end', timer: 2000 });
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

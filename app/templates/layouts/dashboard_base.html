@@ -1,0 +1,152 @@
+{% extends "layouts/base.html" %}
+
+{% block head %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">
+                <img src="{{ url_for('static', filename='images/sma_al-kautsar.png') }}" alt="Logo">
+            </div>
+            <div class="sidebar-brand-text">
+                <h5>AL-KAUTSAR</h5>
+                <small>ATTENDANCE SYSTEM</small>
+            </div>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <div class="sidebar-menu-title">Menu Utama</div>
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+            <a href="{{ url_for('students.index') }}" class="sidebar-link {% if request.endpoint and 'students' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-people-fill"></i> Data Siswa
+            </a>
+            <a href="{{ url_for('classes.index') }}" class="sidebar-link {% if request.endpoint and 'classes' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-easel-fill"></i> Data Kelas
+            </a>
+            
+            <div class="sidebar-menu-title">Absensi</div>
+            <a href="{{ url_for('attendance.scan') }}" class="sidebar-link {% if request.endpoint == 'attendance.scan' %}active{% endif %}">
+                <i class="bi bi-qr-code-scan"></i> Scan QR Code
+            </a>
+            <a href="{{ url_for('attendance.history') }}" class="sidebar-link {% if request.endpoint == 'attendance.history' %}active{% endif %}">
+                <i class="bi bi-calendar-check-fill"></i> Riwayat Absensi
+            </a>
+            <a href="{{ url_for('reports.index') }}" class="sidebar-link {% if request.endpoint and 'reports' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-file-earmark-bar-graph-fill"></i> Laporan
+            </a>
+
+            <div class="sidebar-menu-title">Sistem</div>
+            <a href="{{ url_for('settings.profile') }}" class="sidebar-link {% if request.endpoint == 'settings.profile' %}active{% endif %}">
+                <i class="bi bi-person-circle"></i> Profil Saya
+            </a>
+            
+            {% if current_user.role == 'super_admin' %}
+            <a href="{{ url_for('users.index') }}" class="sidebar-link {% if request.endpoint and 'users' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-person-badge-fill"></i> Manajemen Pengguna
+            </a>
+            <a href="{{ url_for('settings.index') }}" class="sidebar-link {% if request.endpoint == 'settings.index' %}active{% endif %}">
+                <i class="bi bi-gear-fill"></i> Pengaturan Sistem
+            </a>
+            <a href="{{ url_for('settings.logs') }}" class="sidebar-link {% if request.endpoint == 'settings.logs' %}active{% endif %}">
+                <i class="bi bi-shield-lock-fill"></i> Activity Log
+            </a>
+            {% endif %}
+            
+            <div class="mt-5 px-3 pb-3">
+                <a href="{{ url_for('auth.logout') }}" class="sidebar-logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Keluar dari Sistem</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar glass">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn btn-link text-dark d-lg-none p-0" id="sidebarToggle">
+                    <i class="bi bi-list fs-3"></i>
+                </button>
+                <div>
+                    <h6 class="mb-0 fw-bold gradient-text">SMA AL-KAUTSAR MANYAR</h6>
+                    <small class="text-secondary" id="currentDateTime">Memuat waktu...</small>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-md-block">
+                    <p class="mb-0 fw-semibold small">{{ current_user.full_name }}</p>
+                    <small class="text-secondary text-capitalize">{{ current_user.role.replace('_', ' ') }}</small>
+                </div>
+                <div class="avatar-circle">
+                    {{ current_user.full_name[0] }}
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area fade-in">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show py-2 small shadow-sm" role="alert" style="border-radius: 12px;">
+                            {{ message }}
+                            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {% block dashboard_content %}{% endblock %}
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- jQuery & DataTables -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    // Sidebar Toggle
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    sidebarToggle?.addEventListener('click', () => {
+        sidebar.classList.toggle('show');
+        sidebarOverlay.classList.toggle('show');
+    });
+    
+    sidebarOverlay?.addEventListener('click', () => {
+        sidebar.classList.remove('show');
+        sidebarOverlay.classList.remove('show');
+    });
+
+    // Clock
+    function updateClock() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dateStr = now.toLocaleDateString('id-ID', options);
+        const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const el = document.getElementById('currentDateTime');
+        if(el) el.textContent = `${dateStr} | ${timeStr} WIB`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+
+{% block dashboard_scripts %}{% endblock %}
+{% endblock %}

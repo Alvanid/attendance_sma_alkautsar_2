@@ -1,0 +1,166 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Dashboard - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+    <div>
+        <h2 class="h4 fw-bold mb-1 gradient-text">Dashboard Utama</h2>
+        <p class="text-secondary mb-0 small">Ringkasan kehadiran hari ini.</p>
+    </div>
+</div>
+
+<!-- Stat Cards Row 1 -->
+<div class="row g-4 mb-4 fade-in">
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card hover-lift">
+            <div class="stat-icon" style="background-color: rgba(22, 133, 104, 0.1); color: var(--emerald);">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <h6 class="text-secondary small fw-semibold mb-1">TOTAL SISWA</h6>
+            <h3 class="fw-bold text-primary-deep mb-0">{{ total_students }}</h3>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card hover-lift">
+            <div class="stat-icon" style="background-color: rgba(18, 60, 50, 0.1); color: var(--deep-forest);">
+                <i class="bi bi-easel-fill"></i>
+            </div>
+            <h6 class="text-secondary small fw-semibold mb-1">TOTAL KELAS</h6>
+            <h3 class="fw-bold text-primary-deep mb-0">{{ total_classes }}</h3>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card hover-lift">
+            <div class="stat-icon" style="background-color: rgba(5, 150, 105, 0.1); color: #059669;">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <h6 class="text-secondary small fw-semibold mb-1">HADIR HARI INI</h6>
+            <h3 class="fw-bold mb-0" style="color: #059669;">{{ hadir + terlambat }}</h3>
+            <small class="text-success fw-semibold">{{ persen_kehadiran }}% Kehadiran</small>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card hover-lift">
+            <div class="stat-icon" style="background-color: rgba(217, 119, 6, 0.1); color: #D97706;">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <h6 class="text-secondary small fw-semibold mb-1">TERLAMBAT</h6>
+            <h3 class="fw-bold mb-0" style="color: #D97706;">{{ terlambat }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Stat Cards Row 2 -->
+<div class="row g-4 mb-4 fade-in">
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3 hover-lift">
+            <div class="stat-icon mb-0" style="background-color: rgba(8, 145, 178, 0.1); color: #0891B2;">
+                <i class="bi bi-envelope-fill"></i>
+            </div>
+            <div>
+                <h6 class="text-secondary small fw-semibold mb-0">IZIN</h6>
+                <h4 class="fw-bold text-primary-deep mb-0">{{ izin }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3 hover-lift">
+            <div class="stat-icon mb-0" style="background-color: rgba(220, 38, 38, 0.1); color: #DC2626;">
+                <i class="bi bi-heart-pulse-fill"></i>
+            </div>
+            <div>
+                <h6 class="text-secondary small fw-semibold mb-0">SAKIT</h6>
+                <h4 class="fw-bold text-primary-deep mb-0">{{ sakit }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center gap-3 hover-lift">
+            <div class="stat-icon mb-0" style="background-color: rgba(107, 114, 128, 0.1); color: #6B7280;">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <div>
+                <h6 class="text-secondary small fw-semibold mb-0">ALPA</h6>
+                <h4 class="fw-bold text-primary-deep mb-0">{{ alpa }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Activity -->
+<div class="row g-4 mb-4 fade-in">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100 hover-lift" style="border-radius: 16px;">
+            <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold text-primary-deep">Grafik Kehadiran Mingguan</h5>
+                <span class="badge bg-primary-deep bg-opacity-10 text-primary-deep px-3 py-2 rounded-pill">7 Hari</span>
+            </div>
+            <div class="card-body px-4 pb-4 pt-0">
+                <div style="height: 300px;">
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 hover-lift" style="border-radius: 16px;">
+            <div class="card-header bg-white border-0 py-3 px-4">
+                <h5 class="mb-0 fw-bold text-primary-deep">Aktivitas Terbaru</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for att in recent_att %}
+                    <li class="list-group-item px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 fw-semibold small">{{ att.full_name }}</h6>
+                            <small class="text-secondary">{{ att.class_name }} • {{ att.time_in }}</small>
+                        </div>
+                        <span class="badge 
+                            {% if att.status == 'Hadir' %}bg-success
+                            {% elif att.status == 'Terlambat' %}bg-warning
+                            {% elif att.status == 'Izin' %}bg-info
+                            {% elif att.status == 'Sakit' %}bg-danger
+                            {% else %}bg-secondary{% endif %} 
+                            rounded-pill px-3 py-2">
+                            {{ att.status }}
+                        </span>
+                    </li>
+                    {% else %}
+                    <li class="list-group-item px-4 py-5 text-center text-secondary border-0">
+                        <i class="bi bi-inbox fs-1 mb-2 d-block opacity-25"></i>
+                        <small>Belum ada aktivitas.</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    fetch('{{ url_for("dashboard.chart_data") }}')
+        .then(r => r.json())
+        .then(data => {
+            new Chart(document.getElementById('weeklyChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label: 'Hadir', data: data.datasets[0].data, backgroundColor: '#168568', borderRadius: 6 },
+                        { label: 'Terlambat', data: data.datasets[1].data, backgroundColor: '#D97706', borderRadius: 6 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
+            });
+        });
+</script>
+{% endblock %}

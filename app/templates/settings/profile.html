@@ -1,0 +1,41 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Profil Saya - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body p-4 text-center mb-4">
+                <div class="avatar-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2rem;">
+                    {{ current_user.full_name[0] }}
+                </div>
+                <h4 class="fw-bold text-primary-deep mb-1">{{ current_user.full_name }}</h4>
+                <p class="text-secondary mb-0">@{{ current_user.username }}</p>
+                <span class="badge bg-primary-deep bg-opacity-10 text-primary-deep px-3 py-2 rounded-pill mt-2 text-capitalize">{{ current_user.role.replace('_', ' ') }}</span>
+            </div>
+            
+            <hr class="my-0">
+            
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-primary-deep mb-3">Ubah Password</h5>
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Password Lama</label>
+                        <input type="password" name="old_password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Password Baru</label>
+                        <input type="password" name="new_password" class="form-control" required minlength="6">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold small">Konfirmasi</label>
+                        <input type="password" name="confirm_password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-emerald w-100 py-2">Update Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

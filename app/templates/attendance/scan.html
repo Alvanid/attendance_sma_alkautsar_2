@@ -1,0 +1,101 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Scan QR Absensi - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<div class="text-center mb-4">
+    <h2 class="h4 fw-bold text-primary-deep">Pemindaian QR Code Absensi</h2>
+    <p class="text-secondary">Arahkan kamera ke QR Code siswa.</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div id="reader"></div>
+        
+        <div id="scanResult" class="scan-result mt-4">
+            <div id="resultCard" class="card border-0 shadow-sm" style="border-radius: 16px;">
+                <div class="card-body p-4 text-center">
+                    <i id="resultIcon" class="bi fs-1 mb-3 d-block"></i>
+                    <h4 id="resultName" class="fw-bold text-primary-deep mb-1"></h4>
+                    <p id="resultClass" class="text-secondary mb-2"></p>
+                    <span id="resultStatus" class="badge fs-6 px-4 py-2 rounded-pill"></span>
+                    <p id="resultMessage" class="mt-3 mb-0 small text-secondary"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script>
+    const resultDiv = document.getElementById('scanResult');
+    const resultIcon = document.getElementById('resultIcon');
+    const resultName = document.getElementById('resultName');
+    const resultClass = document.getElementById('resultClass');
+    const resultStatus = document.getElementById('resultStatus');
+    const resultMessage = document.getElementById('resultMessage');
+    const resultCard = document.getElementById('resultCard');
+
+    let lastScannedToken = '';
+    let lastScanTime = 0;
+
+    function onScanSuccess(decodedText) {
+        const now = Date.now();
+        if (decodedText === lastScannedToken && now - lastScanTime < 3000) return;
+        lastScannedToken = decodedText;
+        lastScanTime = now;
+
+        fetch('{{ url_for("attendance.process") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ token: decodedText })
+        })
+        .then(r => r.json())
+        .then(data => {
+            showResult(data);
+            playSound(data.success);
+        });
+    }
+
+    function showResult(data) {
+        resultDiv.style.display = 'block';
+        resultName.textContent = data.student ? data.student.full_name : 'Tidak Dikenal';
+        resultClass.textContent = data.student ? `${data.student.nis} • ${data.student.class_name}` : '';
+        resultMessage.textContent = data.message;
+
+        if (data.success) {
+            resultCard.className = 'card border-0 shadow-sm border-start border-5 border-success';
+            resultIcon.className = 'bi bi-check-circle-fill fs-1 mb-3 d-block text-success';
+            resultStatus.textContent = data.status;
+            resultStatus.className = 'badge fs-6 px-4 py-2 rounded-pill ' + (data.status === 'Hadir' ? 'bg-success' : 'bg-warning');
+        } else {
+            resultCard.className = 'card border-0 shadow-sm border-start border-5 border-danger';
+            resultIcon.className = 'bi bi-x-circle-fill fs-1 mb-3 d-block text-danger';
+            resultStatus.textContent = 'GAGAL';
+            resultStatus.className = 'badge fs-6 px-4 py-2 rounded-pill bg-danger';
+        }
+
+        setTimeout(() => { resultDiv.style.display = 'none'; }, 4000);
+    }
+
+    function playSound(success) {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.frequency.setValueAtTime(success ? 880 : 220, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.2);
+        } catch(e) {}
+    }
+
+    new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false).render(onScanSuccess);
+</script>
+{% endblock %}

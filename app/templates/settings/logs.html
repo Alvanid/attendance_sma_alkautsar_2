@@ -1,0 +1,47 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Activity Log - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 fw-bold text-primary-deep">Activity Log</h2>
+    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">Super Admin Only</span>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <table id="tableLogs" class="table table-hover align-middle" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Waktu</th>
+                    <th>User</th>
+                    <th>Aktivitas</th>
+                    <th>Deskripsi</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td class="text-nowrap small">{{ log.created_at }}</td>
+                    <td class="fw-semibold">{{ log.username or 'System' }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ log.action }}</span></td>
+                    <td class="small">{{ log.description }}</td>
+                    <td class="small text-secondary">{{ log.ip_address }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script>
+    $(document).ready(function() {
+        $('#tableLogs').DataTable({
+            order: [[0, 'desc']],
+            language: { search: "Cari:", paginate: { previous: "Prev", next: "Next" } }
+        });
+    });
+</script>
+{% endblock %}

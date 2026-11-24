@@ -1,0 +1,150 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Data Kelas - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 fw-bold mb-1 text-primary-deep">Manajemen Kelas</h2>
+        <p class="text-secondary mb-0 small">Kelola data kelas dan wali kelas.</p>
+    </div>
+    <button class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#addModal">
+        <i class="bi bi-plus-lg me-2"></i>Tambah Kelas
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <table id="tableKelas" class="table table-hover align-middle" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Nama Kelas</th>
+                    <th>Tingkat</th>
+                    <th>Wali Kelas</th>
+                    <th>Tahun Ajaran</th>
+                    <th class="text-center">Jumlah Siswa</th>
+                    <th class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in classes %}
+                <tr>
+                    <td class="fw-semibold">{{ c.name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ c.grade_level }}</span></td>
+                    <td>{{ c.wali_kelas or 'Belum ada' }}</td>
+                    <td>{{ c.tahun_ajaran }}</td>
+                    <td class="text-center"><span class="badge bg-primary-deep bg-opacity-10 text-primary-deep px-3 py-2 rounded-pill">{{ c.jumlah_siswa }} Siswa</span></td>
+                    <td class="text-center">
+                        <div class="btn-group">
+                            <a href="{{ url_for('qrcode.batch_generate', class_id=c.id) }}" class="btn btn-sm btn-outline-success" title="Generate QR Massal" onclick="return confirm('Generate QR untuk seluruh siswa di kelas ini?')">
+                                <i class="bi bi-qr-code-scan"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ c.id }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <a href="{{ url_for('classes.delete', id=c.id) }}" class="btn btn-sm btn-outline-danger btn-delete" data-name="Kelas {{ c.name }}">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Tambah -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <form action="{{ url_for('classes.add') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="academic_year_id" value="1">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold text-primary-deep">Tambah Kelas Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nama Kelas</label>
+                        <input type="text" name="name" class="form-control" placeholder="Contoh: X-A" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Tingkat</label>
+                        <select name="grade_level" class="form-select" required>
+                            <option value="X">X</option>
+                            <option value="XI">XI</option>
+                            <option value="XII">XII</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Wali Kelas</label>
+                        <select name="homeroom_teacher_id" class="form-select">
+                            <option value="">-- Pilih --</option>
+                            {% for t in teachers %}
+                            <option value="{{ t.id }}">{{ t.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="submit" class="btn btn-emerald">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for c in classes %}
+<!-- Modal Edit -->
+<div class="modal fade" id="editModal{{ c.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <form action="{{ url_for('classes.edit', id=c.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold text-primary-deep">Edit Kelas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nama Kelas</label>
+                        <input type="text" name="name" class="form-control" value="{{ c.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Tingkat</label>
+                        <select name="grade_level" class="form-select" required>
+                            <option value="X" {% if c.grade_level == 'X' %}selected{% endif %}>X</option>
+                            <option value="XI" {% if c.grade_level == 'XI' %}selected{% endif %}>XI</option>
+                            <option value="XII" {% if c.grade_level == 'XII' %}selected{% endif %}>XII</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Wali Kelas</label>
+                        <select name="homeroom_teacher_id" class="form-select">
+                            <option value="">-- Pilih --</option>
+                            {% for t in teachers %}
+                            <option value="{{ t.id }}" {% if c.homeroom_teacher_id == t.id %}selected{% endif %}>{{ t.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="submit" class="btn btn-emerald">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script>
+    $(document).ready(function() {
+        $('#tableKelas').DataTable({
+            language: { search: "Cari:", lengthMenu: "Tampilkan _MENU_ data", info: "_START_ - _END_ dari _TOTAL_", paginate: { previous: "Prev", next: "Next" } }
+        });
+    });
+</script>
+{% endblock %}

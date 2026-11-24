@@ -1,0 +1,192 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Data Siswa - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h2 class="h4 fw-bold mb-1 text-primary-deep">Data Siswa</h2>
+        <p class="text-secondary mb-0 small">Kelola data induk siswa.</p>
+    </div>
+<div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('students.export_excel') }}" class="btn btn-outline-emerald">
+        <i class="bi bi-file-earmark-excel me-2"></i>Export
+    </a>
+    <button class="btn btn-outline-emerald" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="bi bi-upload me-2"></i>Import
+    </button>
+    <button class="btn btn-emerald" data-bs-toggle="modal" data-bs-target="#addModal">
+        <i class="bi bi-person-plus-fill me-2"></i>Tambah Siswa
+    </button>
+</div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <table id="tableSiswa" class="table table-hover align-middle" style="width:100%">
+            <thead>
+                <tr>
+                    <th>NIS</th>
+                    <th>Nama Lengkap</th>
+                    <th>JK</th>
+                    <th>Kelas</th>
+                    <th>No Telepon</th>
+                    <th class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td class="fw-semibold text-primary-deep">{{ s.nis }}</td>
+                    <td>{{ s.full_name }}</td>
+                    <td>
+                        {% if s.gender == 'L' %}
+                            <span class="badge bg-info bg-opacity-10 text-info">L</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger">P</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ s.class_name or '-' }}</span></td>
+                    <td>{{ s.phone or '-' }}</td>
+                    <td class="text-center">
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('qrcode.card', student_id=s.id) }}" class="btn btn-sm btn-outline-success" title="Kartu Pelajar">
+                                <i class="bi bi-qr-code"></i>
+                            </a>
+                            <a href="{{ url_for('students.delete', id=s.id) }}" class="btn btn-sm btn-outline-danger btn-delete" data-name="{{ s.full_name }}" title="Nonaktifkan">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Import -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius: 16px;">
+            <form action="{{ url_for('students.import_excel') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold text-primary-deep">Import Data Siswa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <div class="alert alert-info small py-2">
+                        <i class="bi bi-info-circle me-1"></i> Format: <strong>nis, nama lengkap, kelas, jenis kelamin</strong>
+                    </div>
+                    <input type="file" name="file" class="form-control" accept=".xlsx" required>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="submit" class="btn btn-emerald">Proses Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah -->
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 16px;">
+            <form action="{{ url_for('students.add') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold text-primary-deep">Tambah Siswa Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">NIS <span class="text-danger">*</span></label>
+                            <input type="text" name="nis" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">NISN</label>
+                            <input type="text" name="nisn" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input type="text" name="full_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Jenis Kelamin <span class="text-danger">*</span></label>
+                            <select name="gender" class="form-select" required>
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Kelas <span class="text-danger">*</span></label>
+                            <select name="class_id" class="form-select" required>
+                                {% for c in classes %}
+                                <option value="{{ c.id }}">{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Tempat Lahir</label>
+                            <input type="text" name="birth_place" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Tanggal Lahir</label>
+                            <input type="date" name="birth_date" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">Alamat</label>
+                            <textarea name="address" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">No Telepon</label>
+                            <input type="text" name="phone" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Foto Siswa</label>
+                            <input type="file" name="photo" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-emerald">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script>
+    $(document).ready(function() {
+        // 1. Hancurkan instansiasi lama jika ada (mencegah konflik)
+        if ($.fn.DataTable.isDataTable('#tableSiswa')) {
+            $('#tableSiswa').DataTable().clear().destroy();
+        }
+        
+        // 2. Inisialisasi dengan definisi kolom eksplisit
+        $('#tableSiswa').DataTable({
+            columns: [
+                null, // Kolom 1: NIS
+                null, // Kolom 2: Nama Lengkap
+                null, // Kolom 3: JK
+                null, // Kolom 4: Kelas
+                null, // Kolom 5: No Telepon
+                { orderable: false } // Kolom 6: Aksi (biasanya tidak perlu di-sort)
+            ],
+            language: { 
+                search: "Cari:", 
+                lengthMenu: "Tampilkan _MENU_ data", 
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                zeroRecords: "Data tidak ditemukan",
+                emptyTable: "Belum ada data siswa.",
+                paginate: { previous: "Sebelumnya", next: "Selanjutnya" }
+            },
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip'
+        });
+    });
+</script>
+{% endblock %}

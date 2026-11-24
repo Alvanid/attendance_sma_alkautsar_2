@@ -1,0 +1,138 @@
+{% extends "layouts/dashboard_base.html" %}
+{% block title %}Laporan Absensi - AL-KAUTSAR{% endblock %}
+
+{% block dashboard_content %}
+<h2 class="h4 fw-bold mb-4 text-primary-deep">Laporan & Rekapitulasi</h2>
+
+<!-- Filter -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <form method="GET" action="{{ url_for('reports.index') }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Tanggal Mulai</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ filters.start }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Tanggal Akhir</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ filters.end }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold small">Kelas</label>
+                    <select name="class_id" class="form-select">
+                        <option value="">Semua Kelas</option>
+                        {% for c in classes %}
+                        <option value="{{ c.id }}" {% if filters.class == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-emerald flex-grow-1">
+                        <i class="bi bi-search me-1"></i> Filter
+                    </button>
+                    <a href="{{ url_for('reports.export_excel', start_date=filters.start, end_date=filters.end, class_id=filters.class) }}" class="btn btn-outline-success">
+                        <i class="bi bi-file-earmark-excel"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+            <h6 class="text-secondary small fw-semibold mb-2">TOTAL</h6>
+            <h3 class="fw-bold text-primary-deep mb-0">{{ total }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+            <h6 class="text-secondary small fw-semibold mb-2">HADIR</h6>
+            <h3 class="fw-bold mb-0" style="color: #059669;">{{ stats.Hadir }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+            <h6 class="text-secondary small fw-semibold mb-2">TERLAMBAT</h6>
+            <h3 class="fw-bold mb-0" style="color: #D97706;">{{ stats.Terlambat }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+            <h6 class="text-secondary small fw-semibold mb-2">IZIN</h6>
+            <h3 class="fw-bold mb-0" style="color: #0891B2;">{{ stats.Izin }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+            <h6 class="text-secondary small fw-semibold mb-2">SAKIT</h6>
+            <h3 class="fw-bold mb-0" style="color: #DC2626;">{{ stats.Sakit }}</h3>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card text-center">
+            <h6 class="text-secondary small fw-semibold mb-2">% HADIR</h6>
+            <h3 class="fw-bold mb-0 text-primary-deep">{{ persen }}%</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <table id="tableReport" class="table table-hover align-middle" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Waktu</th>
+                    <th>NIS</th>
+                    <th>Nama</th>
+                    <th>Kelas</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                <tr>
+                    <td>{{ r.date }}</td>
+                    <td>{{ r.time_in }}</td>
+                    <td class="fw-semibold">{{ r.nis }}</td>
+                    <td>{{ r.full_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ r.class_name }}</span></td>
+                    <td>
+                        <span class="badge 
+                            {% if r.status == 'Hadir' %}bg-success
+                            {% elif r.status == 'Terlambat' %}bg-warning
+                            {% elif r.status == 'Izin' %}bg-info
+                            {% elif r.status == 'Sakit' %}bg-danger
+                            {% else %}bg-secondary{% endif %} rounded-pill px-3 py-2">
+                            {{ r.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-secondary">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-25"></i>
+                        <small>Tidak ada data.</small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_scripts %}
+<script>
+    $(document).ready(function() {
+        $('#tableReport').DataTable({
+            order: [[0, 'desc']],
+            language: { search: "Cari:", paginate: { previous: "Prev", next: "Next" } }
+        });
+    });
+</script>
+{% endblock %}
